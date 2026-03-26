@@ -42,7 +42,7 @@ TREE_SPECIES = {
     "🌳 Terak (Poplar)": {"co2": 48, "id": "terak"},
     "🌿 To'l (Willow)": {"co2": 35, "id": "tol"},
     "🌳 Chinor (Plane Tree)": {"co2": 56, "id": "chinor"},
-    "🌰 Yong'oq (Walnut)": {"co2": 40, "id": "yongоq"},
+    "🌰 Yong'oq (Walnut)": {"co2": 40, "id": "yongoq"},
     "🍎 Olma (Apple)": {"co2": 20, "id": "olma"},
     "🍑 Shaftoli (Peach)": {"co2": 18, "id": "shaftoli"},
     "🌲 Shumto'l (Elm)": {"co2": 30, "id": "shumtol"},
@@ -82,7 +82,6 @@ def generate_blockchain_hash(lat, lon, t_type, timestamp):
     return "UZ-CC-" + hashlib.sha256(raw.encode()).hexdigest()[:24].upper()
 
 def check_duplicate_location(lat, lon, existing_df, threshold_m=10):
-    """10 metr ichida takroriy daraxt bor-yo'qligini tekshirish (anti double-counting)"""
     for _, row in existing_df.iterrows():
         dist = ((row['lat'] - lat) ** 2 + (row['lon'] - lon) ** 2) ** 0.5 * 111000
         if dist < threshold_m:
@@ -148,7 +147,6 @@ def auth_page():
                 demo_user = {"name": "Demo Foydalanuvchi", "email": "demo@carbonvision.uz", "region": "Toshkent"}
                 st.session_state.authenticated = True
                 st.session_state.current_user = demo_user
-                # Demo daraxtlar qo'shish
                 if len(st.session_state.tree_db) == 0:
                     demo_trees = [
                         {
@@ -212,7 +210,6 @@ def auth_page():
 def main_app():
     user = st.session_state.current_user
 
-    # --- SIDEBAR ---
     with st.sidebar:
         st.markdown(f"""
         <div style='text-align:center; padding:1rem 0'>
@@ -239,7 +236,6 @@ def main_app():
 
         st.divider()
 
-        # Global stats
         total_trees = st.session_state.tree_db['soni'].sum() if len(st.session_state.tree_db) > 0 else 0
         total_credits = st.session_state.tree_db['kredit'].sum() if len(st.session_state.tree_db) > 0 else 0
         st.markdown(f"🌳 **{int(total_trees)}** ta daraxt")
@@ -381,7 +377,6 @@ def main_app():
             with col8:
                 description = st.text_area("Qo'shimcha ma'lumot:", placeholder="Daraxt haqida...")
 
-            # Real-time preview
             metrics = calculate_metrics(t_type, t_count, t_age)
             st.divider()
             st.subheader("📊 Taxminiy hisob-kitob")
@@ -393,7 +388,6 @@ def main_app():
             submitted = st.form_submit_button("🚀 Sertifikatlash va Kredit olish", use_container_width=True)
 
             if submitted:
-                # Anti-fraud: double location check
                 if len(st.session_state.tree_db) > 0:
                     is_dup, dup_id = check_duplicate_location(lat, lon, st.session_state.tree_db)
                     if is_dup:
@@ -455,10 +449,7 @@ def main_app():
 
         if len(df) == 0:
             st.info("🌱 Hali daraxt qo'shilmagan. Birinchi daraxtingizni sertifikatlang!")
-            if st.button("🌳 Daraxt qo'shish"):
-                st.rerun()
         else:
-            # Search/filter
             search = st.text_input("🔍 Qidirish (tur nomi yoki manzil):", placeholder="Archa, Chinor, Toshkent...")
             if search:
                 df = df[df['turi'].str.contains(search, case=False, na=False) |
@@ -471,7 +462,6 @@ def main_app():
 
             st.divider()
 
-            # Table with better columns
             display_df = df[[
                 'id', 'turi', 'soni', 'yoshi', 'balandlik_m',
                 'manzil', 'co2_yilik_kg', 'kredit',
@@ -648,7 +638,6 @@ def main_app():
         df = st.session_state.tree_db
         total_credits = df['kredit'].sum() if len(df) > 0 else 0
 
-        # Mock leaderboard with current user
         leaders = [
             {"#": "🥇", "Ism": "Abdullayev Jamshid", "Viloyat": "Toshkent", "Daraxt": 142, "Kredit": 4.832, "Daromad ($)": 314.08},
             {"#": "🥈", "Ism": "Karimova Malika", "Viloyat": "Samarqand", "Daraxt": 98, "Kredit": 3.211, "Daromad ($)": 208.72},
@@ -713,7 +702,9 @@ def main_app():
         - [ ] SMS bildirishnomalar (Eskiz.uz)
         """)
 
-# ==================== MAIN ====================
+
+# ==================== ENTRY POINT ====================
+# Bu qator MUHIM — ilovani ishga tushiradi
 if not st.session_state.authenticated:
     auth_page()
 else:
